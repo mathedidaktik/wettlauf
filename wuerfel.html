@@ -1,0 +1,183 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta author="Michael Kallweit">
+    <script type="text/javascript" charset="UTF-8" src="Chart.bundle.min.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="chartjs-plugin-datalabels.min.js"></script>
+    <title>Wettlauf</title>
+</head>
+
+<body>
+<h1>Wettlauf</h1>
+<h2 id="titel"></h2>
+<div class="chart-container" style="position: relative; height:300px; width:400px;">
+    <canvas id="myChart"></canvas>
+</div>
+
+<script>
+    
+
+Chart.defaults.global.legend.display = false;
+
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+
+function random_item(items){
+    return items[Math.floor(Math.random()*items.length)];
+}
+
+var wuerfeldaten={"w10":{"name":"Weißer 10er Würfel", "bild":"d10.png","seiten":[
+                                                                            {'name':'Gelb','anzahl':3,'hintergrundfarbe':'rgba(255, 206, 86, 0.2)','rahmenfarbe':'rgba(255, 206, 86, 1)'},
+                                                                            {'name':'Rot','anzahl':5,'hintergrundfarbe':'rgba(255, 99, 132, 0.2)','rahmenfarbe':'rgba(255, 99, 132, 1)'},
+                                                                            {'name':'Blau','anzahl':2,'hintergrundfarbe':'rgba(54, 162, 235, 0.2)','rahmenfarbe':'rgba(54, 162, 235, 1)'}
+                                                                        ]
+              },
+              "w20":{"name":"Schwarzer 20er Würfel", "bild":"schwarz_d20.jpeg","seiten":[
+                                                                            {'name':'Gelb','anzahl':10,'hintergrundfarbe':'rgba(255, 206, 86, 0.2)','rahmenfarbe':'rgba(255, 206, 86, 1)'},
+                                                                            {'name':'Rot','anzahl':5,'hintergrundfarbe':'rgba(255, 99, 132, 0.2)','rahmenfarbe':'rgba(255, 99, 132, 1)'},
+                                                                            {'name':'Blau','anzahl':5,'hintergrundfarbe':'rgba(54, 162, 235, 0.2)','rahmenfarbe':'rgba(54, 162, 235, 1)'}
+                                                                        ]
+              }/*,
+              "w20_4":{"name":"20 Seiten Würfel, 4 Farben", "bild":"","seiten":[
+                                                                            {'name':'Gelb','anzahl':7,'hintergrundfarbe':'rgba(255, 206, 86, 0.2)','rahmenfarbe':'rgba(255, 206, 86, 1)'},
+                                                                            {'name':'Rot','anzahl':7,'hintergrundfarbe':'rgba(255, 99, 132, 0.2)','rahmenfarbe':'rgba(255, 99, 132, 1)'},
+                                                                            {'name':'Blau','anzahl':3,'hintergrundfarbe':'rgba(54, 162, 235, 0.2)','rahmenfarbe':'rgba(54, 162, 235, 1)'},
+                                                                            {'name':'Grün','anzahl':3,'hintergrundfarbe':'rgba(75, 192, 192, 0.2)','rahmenfarbe':'rgba(75, 192, 192, 1)'}
+                                                                        ]
+              },
+              "w4":{"name":"4 Seiten Würfel, 2 Farben", "bild":"","seiten":[
+                                                                            {'name':'Schwarz','anzahl':2,'hintergrundfarbe':'rgba(0, 0, 0, 0.5)','rahmenfarbe':'rgba(0, 0, 0, 1)'},
+                                                                            {'name':'Pink','anzahl':2,'hintergrundfarbe':'rgba(153, 102, 255, 0.2)','rahmenfarbe':'rgba(153, 102, 255, 1)'},
+                                                                        ]
+              }*/
+             };
+
+function newchart(){
+    Chart.helpers.each(Chart.instances, function(instance){
+        instance.destroy();
+    });  // Alte Instanzen löschen
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var anzahl = parseInt(document.getElementById('anzahl').value);
+    var id=document.getElementById('auswahl').value;
+    document.getElementById('titel').innerHTML=wuerfeldaten[id]['name'];
+    var labels=wuerfeldaten[id].seiten.map(x=>x['name'])
+    var backgroundColor=wuerfeldaten[id].seiten.map(x=>x['hintergrundfarbe'])
+    var borderColor=wuerfeldaten[id].seiten.map(x=>x['rahmenfarbe'])
+    var liste=wuerfeldaten[id].seiten.map(x=>Array(x['anzahl']).fill(x['name'])).flat()
+    var ergebnisse=Array.from({length: anzahl}, () => random_item(liste));
+    var counts = {};
+    for (var i = 0; i < anzahl; i++) {
+      var num = ergebnisse[i];
+      counts[num] = counts[num] ? counts[num] + 1 : 1;
+    }
+    var data=wuerfeldaten[id].seiten.map(x=>Math.floor(counts[x['name']]/anzahl*100));
+    var myChart = new Chart(ctx, {
+        type: 'horizontalBar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Würfelergebnisse',
+                data: data,
+                backgroundColor: backgroundColor,
+                borderColor: borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                // Change options for ALL labels of THIS CHART
+                datalabels: {
+                    color: borderColor,
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: function(value, context) {
+                        return value+" %";
+                    }
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        min: 0,
+                        max:100,
+                        suggestedMax:100,
+                        stepSize: 10
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Prozent %',
+                    },
+                }]
+            },
+            title: {
+                display:false
+            }
+        }
+    });
+}
+
+function neuerwuerfel(){
+    var id=innerHTML=document.getElementById('auswahl').value;
+    var table=document.getElementById('wuerfelinfos');
+    table.innerHTML="";
+//    var row = table.insertRow(0);
+//    var cell1 = row.insertCell(0);
+//    cell1.innerHTML = "<strong>Seitenfarbe</strong>";
+//    var cell2 = row.insertCell(1);
+//    cell2.innerHTML = "<strong>Häufigkeit</strong>";   
+    for (i in wuerfeldaten[id]["seiten"]){
+        seite=wuerfeldaten[id]["seiten"][i]
+        var row = table.insertRow(-1);
+        var cell1 = row.insertCell(0);
+        cell1.innerHTML = '<span style="color:'+seite['rahmenfarbe']+'">'+seite['name']+'</span>';
+        var cell2 = row.insertCell(1);
+        cell2.innerHTML = '<span style="color:'+seite['rahmenfarbe']+'">'+seite['anzahl']+'</span>';
+    }
+    document.getElementById('wuerfelbild').src=wuerfeldaten[id]["bild"];
+}
+
+</script>
+<div style="float:left;width:400px;">
+<table>
+    <tr>
+        <td valign="top">Wurfanzahl:</td>
+        <td><input type="number" min="1" id="anzahl" value="100"><br><br></td>
+    </tr>
+    <tr>
+        <td>Würfel:</td>
+        <td><select id="auswahl" onchange="neuerwuerfel();"></select></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td><br><button onclick="newchart();">Start</button></td>
+    </tr>
+</table>
+</div>
+
+<div style="height:300px;margin-left:50px;">
+<h3>Würfelflächen</h3>
+<table id="wuerfelinfos" style="float:left;">
+</table>
+<img id="wuerfelbild" style="margin-left:50px;height:100px;">
+</div>
+
+<script>
+    var selectBox = document.getElementById('auswahl');
+    for (wuerfel in wuerfeldaten){
+        selectBox.options.add( new Option(wuerfeldaten[wuerfel]["name"], wuerfel, false) );
+    }
+    neuerwuerfel();
+</script>
+
+</body>
+
+
+</html>
